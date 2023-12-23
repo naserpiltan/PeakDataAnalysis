@@ -3,6 +3,8 @@ import pandas as pd
 import glob
 import pathlib
 import os
+from holidays_manager import HolidaysManager
+from date_time_manager import DateTimeManager
 
 # time set is not required
 
@@ -14,6 +16,8 @@ class JsonManager:
         self.__json_files_list =[]
         self.__get_json_files_list()
         self.read_json_files()
+        self.__holidays_manager = HolidaysManager()
+        self.__date_time_manager = DateTimeManager()
 
     def __get_json_files_list(self):
         for file in os.listdir(self.__json_folder_path):
@@ -39,14 +43,28 @@ class JsonManager:
                     day = None
                     am_pm = None
                     month = None
+                    is_public_holidays = None
+                    is_school_holidays = None
+                    is_day_after_public_holiday = None
+                    is_day_before_public_holiday = None
+                    is_weekend = None
+                    is_weekday = None
+
                     for dr in date_ranges:
                         date_from = dr['from']
+                        date_from_pd = pd.to_datetime(date_from)
                         date_to = dr['to']
                         day = str(str(dr['name']).split(" ")[0]).split("-")[0]
                         am_pm = str(str(dr['name']).split(" ")[0]).split("-")[1]
                         month = str(str(dr['name']).split(" ")[0]).split("-")[2]
                         year = str(dr['name']).split(" ")[1]
                         date_range = date_from+" to "+date_to
+                        is_public_holidays = self.__holidays_manager.is_public_holiday(year, month, day)
+                        is_school_holidays = self.__holidays_manager.is_school_holiday(year, month, day)
+                        is_day_after_public_holiday = self.__holidays_manager.is_day_after_holiday(year, month, day)
+                        is_day_before_public_holiday = self.__holidays_manager.is_day_before_holiday(year, month, day)
+                        is_weekend = self.__holidays_manager.is_weekend(day)
+                        is_weekday = not is_weekend
 
                     for segment in segment_results:
                         segment_id = segment['segmentId']
