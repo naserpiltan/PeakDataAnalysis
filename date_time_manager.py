@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 
 
 class DateTimeManager:
@@ -10,26 +11,46 @@ class DateTimeManager:
             'September': 8, 'October': 9, 'November': 10, 'December': 11
         }
 
+    def refine_day_name(self, week_day_name):
+        day_name = week_day_name
+        if week_day_name[-1] == 's':
+            day_name = week_day_name[:-1]
+        biggest_similarity_index = 0
+        biggest_similarity = -1
+        for name_index, name in enumerate(self.__days):
+            similarity = SequenceMatcher(None, day_name, name).ratio()
+            if similarity > biggest_similarity:
+                biggest_similarity_index = name_index
+                biggest_similarity = similarity
+        return self.__days[biggest_similarity_index]
+
+
+
+
+
     def find_weekdays(self, year, month, day_of_week):
+        day_name = day_of_week
+        if day_name[-1] == 's':
+            day_name = day_of_week[:-1]
         # Convert the day_of_week to a weekday number (0=Monday, 6=Sunday)
-        weekday = self.__days.index(day_of_week.title())
+        weekday = self.__days.index(day_name.title())
 
         # Start at the beginning of the month
-        date = datetime(year, month, 1)
+        tmp_date = datetime(int(year), int(month), 1)
 
         # Move to the first occurrence of the desired weekday
-        while date.weekday() != weekday:
-            date += timedelta(days=1)
+        while tmp_date.weekday() != weekday:
+            tmp_date += timedelta(days=1)
 
         # Collect all occurrences of the weekday in the month
-        dates = []
-        while date.month == month:
-            dates.append(date.strftime('%Y-%m-%d'))
-            date += timedelta(days=7)  # Move to the next week
-        return dates
+        tmp_dates = []
+        while tmp_date.month == month:
+            tmp_dates.append(tmp_date.strftime('%Y-%m-%d'))
+            tmp_date += timedelta(days=7)  # Move to the next week
+        return tmp_dates
 
     def month_name_to_index(self, month_name):
-        month_index = self.__month_dict.get(month_name.title())
+        month_index = self.__month_dict.get(month_name.title())+1 #months index is starting from 0, but month number is from 1
         if month_index is not None:
             return month_index
         else:

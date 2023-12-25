@@ -1,6 +1,7 @@
 import pandas as pd
 from date_time_manager import DateTimeManager
 from datetime import datetime, timedelta
+from multipledispatch import dispatch
 
 class HolidaysManager:
     def __init__(self):
@@ -37,10 +38,10 @@ class HolidaysManager:
             'Spring Holidays 2023': (pd.to_datetime('2023-10-15'), pd.to_datetime('2023-10-31')),
             'Term 4, 2023': (pd.to_datetime('2023-10-31'), pd.to_datetime('2023-12-31')),
         }
-
-    def is_public_holiday(self, date):
+    def __is_public_holiday(self, date):
         for holiday_date in self.__public_holidays_dict.values():
-            if date == holiday_date.date():
+            #print("date:", date.date(), " holiday date:", holiday_date.date(), " status:", date.date() == holiday_date.date())
+            if date.date() == holiday_date.date():
                 return True
         return False
 
@@ -50,13 +51,14 @@ class HolidaysManager:
             day_name = week_day_name[:-1]
         month = self.__date_time_manager.month_name_to_index(month_name)
         dates = self.__date_time_manager.find_weekdays(year, month, day_name)
+        print("Dates: ",dates)
         for date in dates:
-            if self.is_public_holiday(pd.to_datetime(date)):
+            if self.__is_public_holiday(pd.to_datetime(date)):
                 return True
         return False
 
     # Function to check if a date is a school holiday
-    def is_school_holiday(self, date):
+    def __is_school_holiday(self, date):
         for start_date, end_date in self.__school_holidays_dict.values():
             if start_date <= date <= end_date:
                 return True
@@ -69,7 +71,7 @@ class HolidaysManager:
         month = self.__date_time_manager.month_name_to_index(month_name)
         dates = self.__date_time_manager.find_weekdays(year, month, day_name)
         for date in dates:
-            if self.is_school_holiday(pd.to_datetime(date)):
+            if self.__is_school_holiday(pd.to_datetime(date)):
                 return True
         return False
 
@@ -77,9 +79,10 @@ class HolidaysManager:
         month = self.__date_time_manager.month_name_to_index(month_name)
         dates = self.__date_time_manager.find_weekdays(year, month, week_day_name)
         for date in dates:
+            date = pd.to_datetime(date)
             day_before = date
             day_before += timedelta(days=-1)
-            if self.is_school_holiday(day_before):
+            if self.__is_public_holiday(day_before):
                 return True
         return False
 
@@ -87,9 +90,11 @@ class HolidaysManager:
         month = self.__date_time_manager.month_name_to_index(month_name)
         dates = self.__date_time_manager.find_weekdays(year, month, week_day_name)
         for date in dates:
-            day_before = date
-            day_before += timedelta(days=1)
-            if self.is_school_holiday(day_before):
+            date = pd.to_datetime(date)
+            next_day = date
+            #if we add one day to the current date and it turns out to be a holiday, so it is a day before holiday
+            next_day += timedelta(days=1)
+            if self.__is_public_holiday(next_day):
                 return True
         return False
 
