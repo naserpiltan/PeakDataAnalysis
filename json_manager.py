@@ -88,10 +88,10 @@ class JsonManager:
                         is_weekend = self.__holidays_manager.is_weekend(day)
                         is_weekday = not is_weekend
 
-                    print("day:", day, " month:", month, " year:", year, " ph:", is_public_holidays, " dbph:",
-                          is_day_before_public_holiday,
-                          " daph:", is_day_after_public_holiday, " isschool:", is_school_holidays, " weekend:",
-                          is_weekend, " weekday:", is_weekday)
+                    # print("day:", day, " month:", month, " year:", year, " ph:", is_public_holidays, " dbph:",
+                    #       is_day_before_public_holiday,
+                    #       " daph:", is_day_after_public_holiday, " isschool:", is_school_holidays, " weekend:",
+                    #       is_weekend, " weekday:", is_weekday)
 
                     for segment in segment_results:
                         segment_id = segment['segmentId']
@@ -109,8 +109,8 @@ class JsonManager:
                         end_long = shape[-1]['longitude']
 
                         segment_time_results = segment.get('segmentTimeResults')
-                        for segment_time in segment_time_results:
-                            speed_percentiles_list = segment_time['speedPercentiles']
+                        # for segment_time in segment_time_results:
+                        #     speed_percentiles_list = segment_time['speedPercentiles']
 
 
                         # print("start_lat ", start_lat, " start_long ", start_long, " end_lat ", end_lat, " end_long ",

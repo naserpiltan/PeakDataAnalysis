@@ -51,7 +51,7 @@ class HolidaysManager:
             day_name = week_day_name[:-1]
         month = self.__date_time_manager.month_name_to_index(month_name)
         dates = self.__date_time_manager.find_weekdays(year, month, day_name)
-        print("Dates: ",dates)
+        #print("Dates: ",dates)
         for date in dates:
             if self.__is_public_holiday(pd.to_datetime(date)):
                 return True
