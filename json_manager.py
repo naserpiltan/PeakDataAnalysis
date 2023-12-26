@@ -6,6 +6,7 @@ import os
 from holidays_manager import HolidaysManager
 from date_time_manager import DateTimeManager
 from excel_exporter import ExcelExporter
+from peak_hour_extractor import PeakHourExtractor, TimeType
 
 # time set is not required
 
@@ -109,17 +110,25 @@ class JsonManager:
                         end_long = shape[-1]['longitude']
 
                         segment_time_results = segment.get('segmentTimeResults')
+                        time_type = TimeType.AM
+                        if am_pm == "PM":
+                            time_type = TimeType.PM
+
+                        peak_hour_finder = PeakHourExtractor(time_type)
+                        peak_hour = peak_hour_finder.calculate_peak_hour(segment_time_results)
+                        peak_period = peak_hour_finder.calculate_peak_period()
+
                         # for segment_time in segment_time_results:
                         #     speed_percentiles_list = segment_time['speedPercentiles']
 
 
                         # print("start_lat ", start_lat, " start_long ", start_long, " end_lat ", end_lat, " end_long ",
                         #      end_long)
-                        self.__append_to_export_columns_dict(segment_id, day, month, date_range, street_name, start_lat,
-                                                             start_long, end_lat, end_long, distance, speed_limit,
-                                                             is_public_holidays, is_day_before_public_holiday,
-                                                             is_day_after_public_holiday, is_school_holidays,
-                                                             is_weekend, is_weekday, frc, speed_percentiles_list)
+                        # self.__append_to_export_columns_dict(segment_id, day, month, date_range, street_name, start_lat,
+                        #                                      start_long, end_lat, end_long, distance, speed_limit,
+                        #                                      is_public_holidays, is_day_before_public_holiday,
+                        #                                      is_day_after_public_holiday, is_school_holidays,
+                        #                                      is_weekend, is_weekday, frc, speed_percentiles_list)
         self.__excel_exporter.write(self.__export_columns_dict)
 
 
