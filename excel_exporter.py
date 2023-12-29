@@ -29,7 +29,7 @@ class ExcelExporter:
         col_num = 0
         for key, value in export_columns_dict.items():
             worksheet.set_row(0, 20)
-            worksheet.set_column(col_num, col_num, 20)
+            worksheet.set_column(col_num, col_num, 25)
             worksheet.write(0, col_num, key, cell_format)
             worksheet.write_column(1, col_num, value, cell_format)
             col_num += 1

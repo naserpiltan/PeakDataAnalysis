@@ -81,32 +81,39 @@ class PeakHourExtractor:
                               int(precentile_list[self.__precentile_lower_bound]))
         return percentile_diff > self.__reliable_percentile_threshold
 
-    def calculate_peak_period(self):
+    def get_peak_period_1_hour_a(self):
 
-        number_of_segments = int(len(self.__time_sets) / self.__slide_window_size)
+        # each 4 time sets represent one hour
+        slider_window_size = self.__slide_window_size
+        return self.calculate_peak_period(slider_window_size)
+
+    def get_peak_period_2_hour_a(self):
+
+        # operations are done inside two hours
+        slider_window_size = 2*self.__slide_window_size
+        return self.calculate_peak_period(slider_window_size)
+
+    def calculate_peak_period(self, slider_window_size):
+
+        number_of_segments = int((len(self.__time_sets)-1) / slider_window_size)+1
         sum_values_list = []
         time_travel_values = list(self.__timeset_travel_time_dict.values())
 
         for index in range(0, number_of_segments):
-            start = index * self.__slide_window_size
+            start = index * slider_window_size
             start = min(start, len(time_travel_values))
 
-            end = start + self.__slide_window_size
+            end = start + slider_window_size
             end = min(end, len(time_travel_values))
 
-            range_values = list(time_travel_values[start:end])
+            range_values = list(self.__sum_values[start:end])
             sum_values_list.append(sum(range_values))
-
-        sum_values_list_sorted = sum_values_list.copy()
-        sum_values_list_sorted.sort(reverse=True)
-
-        sum_values_list_sorted_indices = self.__find_indices(sum_values_list_sorted, sum_values_list_sorted)
 
         for segment_index in range(0, number_of_segments):
 
-            segment_start = segment_index * self.__slide_window_size
+            segment_start = segment_index * slider_window_size
 
-            segment_end = segment_start + self.__slide_window_size
+            segment_end = segment_start + slider_window_size
             segment_end = min(segment_end, len(self.__time_sets) - 1)
 
             if segment_start <= self.__peak_hour_index < segment_end:
@@ -114,9 +121,43 @@ class PeakHourExtractor:
                 time_set_start = time_sets[segment_start]
                 time_set_end = time_sets[segment_end]
                 period = self.__time_sets[time_set_start] + " to " + self.__time_sets[time_set_end]
+                return period
 
-                return time_set_start, time_set_end
-        return -1, -1
+        return "- to -"
+
+    def get_peak_period_1_hour_b(self):
+
+        sum_values_list = []
+
+        time_travel_values = list(self.__timeset_travel_time_dict.values())
+
+        # this time we move by two steps
+        for index in range(0, len(self.__time_sets), 2):
+            # this is the start index of each hour(4 quarters)
+            start = index
+            end = index + self.__slide_window_size
+            # bound the end value to the range ot the list
+            end = min(end, len(self.__time_sets))
+
+            # extract current index to one hour ahead
+            one_hour_values = time_travel_values[start: end]
+
+            sum_values_list.append(sum(one_hour_values))
+
+        for segment_index in range(0, len(sum_values_list)):
+
+            start = segment_index * 2
+            end = start + self.__slide_window_size
+            end = min(end, len(self.__time_sets)-1)
+
+            if start <= self.__peak_hour_index < end:
+                time_sets = list(self.__time_sets.keys())
+                time_set_start = time_sets[start]
+                time_set_end = time_sets[end]
+                period = self.__time_sets[time_set_start] + " to " + self.__time_sets[time_set_end]
+                return period
+
+        return "- to -"
 
     def calculate_peak_hour(self):
 
@@ -133,7 +174,7 @@ class PeakHourExtractor:
         for index in range(0, len(self.__time_sets)):
             # this is the start index of each hour(4 quarters)
             start = index
-            end = index + 4
+            end = index + self.__slide_window_size
             # bound the end value to the range ot the list
             end = min(end, len(self.__time_sets))
 
@@ -188,13 +229,11 @@ class PeakHourExtractor:
 
             highest_value_index = highest_sum_indices[maximum_sum_index]
 
-            # decide if the time set is for 5:00 to 5:45. if it was, we ignore it
-            # 3 is the index of 5:45
-            if self.__time_type == TimeType.AM and highest_value_index > 3:
-                time_sets = list(self.__time_sets.keys())
-                self.__peak_hour_time_set = time_sets[highest_value_index]
+            time_sets = list(self.__time_sets.keys())
+            self.__peak_hour_time_set = time_sets[highest_value_index]
 
-                self.__peak_hour_index = highest_value_index
-                peak_hour = self.__time_sets[self.__peak_hour_time_set]
-                return self.__peak_hour_time_set
-            return -1
+            self.__peak_hour_index = highest_value_index
+            peak_hour = self.__time_sets[self.__peak_hour_time_set]
+            return peak_hour
+
+        return -1

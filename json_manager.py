@@ -116,8 +116,10 @@ class JsonManager:
 
                         peak_hour_finder = PeakHourExtractor(segment_time_results, time_type)
                         peak_hour = peak_hour_finder.calculate_peak_hour()
-                        peak_period = peak_hour_finder.calculate_peak_period()
-                        peak_period = str(peak_period[0])+","+str(peak_period[1])
+                        peak_period_1_hour_a = peak_hour_finder.get_peak_period_1_hour_a()
+                        peak_period_2_hour_a = peak_hour_finder.get_peak_period_2_hour_a()
+                        peak_period_1_hour_b = peak_hour_finder.get_peak_period_1_hour_b()
+
                         is_percentile_reliable = peak_hour_finder.is_percentile_reliable()
                         is_sample_size_reliable = peak_hour_finder.is_sample_size_reliable()
 
@@ -125,7 +127,8 @@ class JsonManager:
                                                              start_long, end_lat, end_long, distance, speed_limit,
                                                              is_public_holidays, is_day_before_public_holiday,
                                                              is_day_after_public_holiday, is_school_holidays,
-                                                             is_weekend, is_weekday, frc, peak_hour, peak_period,
+                                                             is_weekend, is_weekday, frc, peak_hour, peak_period_1_hour_a,
+                                                             peak_period_2_hour_a, peak_period_1_hour_b,
                                                              is_sample_size_reliable, is_percentile_reliable)
         self.__excel_exporter.write(self.__export_columns_dict)
 
@@ -139,13 +142,15 @@ class JsonManager:
         self.__export_columns = ['segment_id', 'day', 'Month', 'Date', 'Address', 'Start_lat', 'Start_long',
                                  'End_lat', 'End_long', 'Distance', 'Speed_limit', 'Public_holidays',
                                  'Day_before_public_holidays', 'Day_after_public_holidays', 'School_holidays',
-                                 'Weekend', 'Weekday', 'Frc', 'Peak_hour', 'Peak_period',
+                                 'Weekend', 'Weekday', 'Frc', 'Peak_hour', 'Peak_period_1_hour_a',
+                                 'Peak_period_2_hour_a', 'Peak_period_1_hour_b',
                                  'Reliability_sample_size', 'Reliability_percentile']
 
     def __append_to_export_columns_dict(self, segment_id, day, month, date, address, start_lat, star_long,
                                         end_lat, end_long, distance, speed_limit, public_holidays,
                                         day_before_public_holidays, day_after_public_holidays,
-                                        school_holidays, weekend, weekday, frc, peak_hour, peak_period,
+                                        school_holidays, weekend, weekday, frc, peak_hour, peak_period_1_hour_a,
+                                        peak_period_2_hour_a, peak_period_1_hour_b,
                                         is_sample_size_reliable, is_percentile_reliable
                                         ):
 
@@ -168,9 +173,11 @@ class JsonManager:
         self.__export_columns_dict[self.__export_columns[16]].append(weekday)
         self.__export_columns_dict[self.__export_columns[17]].append(frc)
         self.__export_columns_dict[self.__export_columns[18]].append(peak_hour)
-        self.__export_columns_dict[self.__export_columns[19]].append(peak_period)
-        self.__export_columns_dict[self.__export_columns[20]].append(is_sample_size_reliable)
-        self.__export_columns_dict[self.__export_columns[21]].append(is_percentile_reliable)
+        self.__export_columns_dict[self.__export_columns[19]].append(peak_period_1_hour_a)
+        self.__export_columns_dict[self.__export_columns[20]].append(peak_period_2_hour_a)
+        self.__export_columns_dict[self.__export_columns[21]].append(peak_period_1_hour_b)
+        self.__export_columns_dict[self.__export_columns[22]].append(is_sample_size_reliable)
+        self.__export_columns_dict[self.__export_columns[23]].append(is_percentile_reliable)
 
         # for index , speed_percent in enumerate(speed_percentiles_list):
         #     self.__export_columns_dict[self.__export_columns[17+index]].append(speed_percentiles_list[index])
