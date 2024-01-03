@@ -1,0 +1,14 @@
+{
+    "files": [
+        "main_ui.py",
+        "main.qml",
+        "HomePage.qml",
+        "DialogPage.qml",
+        "DropDownsPage.qml",
+        "CheckableItem.qml",
+        "Models.qml",
+        "CheckableComboBox.qml",
+        "Controller.py",
+        "ProgressPage.qml"
+    ]
+}
