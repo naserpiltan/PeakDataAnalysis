@@ -9,8 +9,10 @@ Item {
     property alias frcModel : frcModel
     property alias schoolHolidayModel : schoolHolidayModel
     property alias publicHolidayModel : publicHolidayModel
-    property alias timeSetsModel: timeSetsModel
+    property alias timeSetsAmModel: timeSetsAmModel
+    property alias timeSetsPmModel: timeSetsPmModel
     property alias classificationModel: classificationModel
+    property alias sampleSizeSearchModel: sampleSizeSearchModel
 
     ListModel {
         id: daysModel
@@ -227,146 +229,233 @@ Item {
     ListModel {
         id: frcModel
         ListElement {
-            text: '1'
+            text: 'FRC type: 0'
             checked: false
         }
         ListElement {
-            text: '2'
+            text: 'FRC type: 1'
             checked: false
         }
-
         ListElement {
-            text: '3'
-            checked: false
-        }
-
-        ListElement {
-            text: '4'
+            text: 'FRC type: 2'
             checked: false
         }
 
         ListElement {
-            text: '5'
+            text: 'FRC type: 3'
             checked: false
         }
 
         ListElement {
-            text: '6'
+            text: 'FRC type: 4'
             checked: false
         }
 
         ListElement {
-            text: '7'
+            text: 'FRC type: 5'
             checked: false
         }
 
         ListElement {
-            text: '8'
+            text: 'FRC type: 6'
             checked: false
         }
 
         ListElement {
-            text: '9'
+            text: 'FRC type: 7'
             checked: false
         }
 
         ListElement {
-            text: '10'
+            text: 'FRC type: 8'
             checked: false
         }
     }
 
     ListModel {
-        id: timeSetsModel
+        id: timeSetsAmModel
         ListElement {
-            text: '2'
+            text: '5:00-5:15'
             checked: false
         }
 
         ListElement {
-            text: '3'
+            text: '5:15-5:30'
             checked: false
         }
 
         ListElement {
-            text: '4'
+            text: '5:30-5:45'
             checked: false
         }
 
         ListElement {
-            text: '5'
+            text: '5:45-6:00'
             checked: false
         }
 
         ListElement {
-            text: '6'
+            text: '6:00-6:15'
             checked: false
         }
 
         ListElement {
-            text: '7'
+            text: '6:15-6:30'
             checked: false
         }
 
         ListElement {
-            text: '8'
+            text: '6:30-6:45'
             checked: false
         }
 
         ListElement {
-            text: '9'
+            text: '6:45-7:00'
             checked: false
         }
 
         ListElement {
-            text: '10'
+            text: '7:00-7:15'
             checked: false
         }
         ListElement {
-            text: '11'
+            text: '7:15-7:30'
             checked: false
         }
         ListElement {
-            text: '12'
+            text: '7:30-7:45'
             checked: false
         }
         ListElement {
-            text: '13'
+            text: '7:45-8:00'
             checked: false
         }
         ListElement {
-            text: '14'
+            text: '8:00-8:15'
             checked: false
         }
         ListElement {
-            text: '15'
+            text: '8:15-8:30'
             checked: false
         }
         ListElement {
-            text: '16'
+            text: '8:30-8:45'
             checked: false
         }
         ListElement {
-            text: '17'
+            text: '8:45-9:00'
             checked: false
         }
         ListElement {
-            text: '18'
+            text: '9:00-9:15'
             checked: false
         }
         ListElement {
-            text: '19'
+            text: '9:15-9:30'
             checked: false
         }
         ListElement {
-            text: '20'
+            text: '9:30-9:45'
             checked: false
         }
         ListElement {
-            text: '21'
+            text: '9:45-10:00'
             checked: false
         }
     }
+
+    ListModel {
+        id: timeSetsPmModel
+        ListElement {
+            text: '14:00-14:15'
+            checked: false
+        }
+
+        ListElement {
+            text: '14:15-14:30'
+            checked: false
+        }
+
+        ListElement {
+            text: '14:30-14:45'
+            checked: false
+        }
+
+        ListElement {
+            text: '14:45-15:00'
+            checked: false
+        }
+
+        ListElement {
+            text: '15:00-15:15'
+            checked: false
+        }
+
+        ListElement {
+            text: '15:15-15:30'
+            checked: false
+        }
+
+        ListElement {
+            text: '15:30-15:45'
+            checked: false
+        }
+
+        ListElement {
+            text: '15:45-16:00'
+            checked: false
+        }
+
+        ListElement {
+            text: '16:00-16:15'
+            checked: false
+        }
+        ListElement {
+            text: '16:15-16:30'
+            checked: false
+        }
+        ListElement {
+            text: '16:30-16:45'
+            checked: false
+        }
+        ListElement {
+            text: '16:45-17:00'
+            checked: false
+        }
+        ListElement {
+            text: '17:00-17:15'
+            checked: false
+        }
+        ListElement {
+            text: '17:15-17:30'
+            checked: false
+        }
+        ListElement {
+            text: '17:30-17:45'
+            checked: false
+        }
+        ListElement {
+            text: '17:45-18:00'
+            checked: false
+        }
+        ListElement {
+            text: '18:00-18:15'
+            checked: false
+        }
+        ListElement {
+            text: '18:15-18:30'
+            checked: false
+        }
+        ListElement {
+            text: '18:30-18:45'
+            checked: false
+        }
+        ListElement {
+            text: '18:45-19:00'
+            checked: false
+        }
+    }
+
 
     ListModel {
         id: classificationModel
@@ -387,6 +476,20 @@ Item {
 
         ListElement {
             text: 'Peak period 1 hour B'
+            checked: false
+        }
+    }
+
+    ListModel
+    {
+        id:sampleSizeSearchModel
+        ListElement {
+            text: 'Peak hour'
+            checked: false
+        }
+
+        ListElement {
+            text: 'Time sets'
             checked: false
         }
     }

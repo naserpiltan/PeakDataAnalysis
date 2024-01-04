@@ -28,8 +28,8 @@ class HolidaysManager:
         }
 
         self.__school_holidays_dict = {
-            'Term 4, 2022': (pd.to_datetime('2022-12-21'), pd.to_datetime('2022-12-31')),
-            'Summer Holidays 2022-2023': (pd.to_datetime('2022-12-21'), pd.to_datetime('2023-02-01')),
+            'Term 4, 2022': (pd.to_datetime('2022-12-21'), pd.to_datetime('2022-12-31')), # december
+            'Summer Holidays 2022-2023': (pd.to_datetime('2022-12-21'), pd.to_datetime('2023-02-01')), #december - anuary - february wednsday
             'Term 1, 2023': (pd.to_datetime('2023-02-01'), pd.to_datetime('2023-04-15')),
             'Autumn Holidays 2023': (pd.to_datetime('2023-04-15'), pd.to_datetime('2023-04-30')),
             'Term 2, 2023': (pd.to_datetime('2023-04-30'), pd.to_datetime('2023-07-15')),

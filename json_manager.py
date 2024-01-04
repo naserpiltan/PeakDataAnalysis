@@ -33,18 +33,110 @@ class JsonManager:
         excel_directory_path = excel_directory_path + "/excel"
         self.__excel_exporter = ExcelExporter(excel_directory_path)
 
+        self.__days_indexes = None  # number of days
+        self.__months_indexes = None # number of months
+        self.__day_time_indexes = None  # am-pm
+        self.__public_holidays_indexes = None  # number of public holidays
+        self.__school_holidays_indexes = None
+        self.__frc_indexes = None
+
+        self.__speed_percentile_time_sets_indexes_am = None
+        self.__speed_percentile_time_sets_indexes_pm = None
+        self.__sample_size_time_sets_indexes_am = None
+        self.__sample_size_time_sets_indexes_pm = None
+
+        self.__classification_index = 0
+        self.__sample_size_value = 0
+        self.__speed_percentile_diff_thresh = 0
+        self.__sample_size_check_Index = 0
+
         self.__get_json_files_list()
         self.read_json_files()
 
+        self.__day_time_types = ["AM", "PM"]
 
+    def set_lists(self,
+                  days_indexes,
+                  months_indexes,
+                  day_time_indexes,
+                  public_h_indexes,
+                  school_h_indexes,
+                  frc_indexes,
+                  s_p_time_set_indexes_am,
+                  s_p_time_set_indexes_pm,
+                  s_p_diff_threshold,
+                  s_s_time_set_indexes_am,
+                  s_s_time_set_indexes_pm,
+                  s_s_check_index,
+                  classification_index,
+                  sample_size):
 
+        self.__days_indexes = days_indexes
+        self.__months_indexes = months_indexes
+        self.__day_time_indexes = day_time_indexes
+        self.__public_holidays_indexes = public_h_indexes
+        self.__school_holidays_indexes = school_h_indexes
+        self.__frc_indexes = frc_indexes
 
+        self.__speed_percentile_time_sets_indexes_am = s_p_time_set_indexes_am
+        self.__speed_percentile_time_sets_indexes_pm = s_p_time_set_indexes_pm
+        self.__sample_size_time_sets_indexes_am = s_s_time_set_indexes_am
+        self.__sample_size_time_sets_indexes_pm = s_s_time_set_indexes_pm
+        self.__speed_percentile_diff_thresh = s_p_diff_threshold
+
+        self.__classification_index = classification_index
+        self.__sample_size_value = sample_size
+        self.__sample_size_check_Index = s_s_check_index
+        print("Lists are set")
 
     def __get_json_files_list(self):
+        if len(self.__json_folder_path) == 0 :
+            print("JSON files folder path is empty")
+            return
         for file in os.listdir(self.__json_folder_path):
             if file.endswith(self.__json_postfix):
                 file_path = os.path.join(self.__json_folder_path, file)
                 self.__json_files_list.append(file_path)
+
+    def __is_day_name_included(self, day_name):
+        for day_index, state in enumerate(self.__days_indexes):
+            if not state:
+                continue
+
+            included_day_name = self.__date_time_manager.get_day_name(day_index)
+            if day_name == included_day_name:
+                return True
+        return False
+
+    def __is_month_name_included(self, month_name):
+        for day_index, state in enumerate(self.__months_indexes):
+            if not state:
+                continue
+
+            included_day_name = self.__date_time_manager.get_month_name(day_index)
+            if month_name == included_day_name:
+                return True
+        return False
+
+    def __is_day_time_included(self, day_time):
+        for day_time_index, state in enumerate(self.__day_time_indexes):
+            if not state:
+                continue
+
+            if day_time == self.__day_time_types[day_time_index]:
+                return True
+
+        return False
+
+    def __is_frc_included(self, frc):
+        for frc_index, state in enumerate(self.__frc_indexes):
+            if not state:
+                continue
+
+            if frc == self.__day_time_types[frc_index]:
+                return True
+
+        return False
 
     def read_json_files(self):
         for file_index, file_path in enumerate(self.__json_files_list):
@@ -89,14 +181,20 @@ class JsonManager:
                         is_weekend = self.__holidays_manager.is_weekend(day)
                         is_weekday = not is_weekend
 
-                    # print("day:", day, " month:", month, " year:", year, " ph:", is_public_holidays, " dbph:",
-                    #       is_day_before_public_holiday,
-                    #       " daph:", is_day_after_public_holiday, " isschool:", is_school_holidays, " weekend:",
-                    #       is_weekend, " weekday:", is_weekday)
+                    if not self.__is_day_name_included(day):
+                        continue
+                    if not self.__is_month_name_included(month):
+                        continue
+                    if self.__is_day_time_included(am_pm):
+                        continue
+
 
                     for segment in segment_results:
                         segment_id = segment['segmentId']
                         frc = segment.get('frc')
+
+                        if not self.__is_frc_included(frc):
+                            continue
 
                         # address
                         street_name = segment.get('streetName')

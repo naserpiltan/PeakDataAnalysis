@@ -11,6 +11,20 @@ class DateTimeManager:
             'September': 8, 'October': 9, 'November': 10, 'December': 11
         }
 
+
+    def get_day_name(self, day_index):
+        if day_index >= len(self.__days):
+            print("Index value is bigger than the days list size")
+        return self.__days[day_index]
+
+
+    def get_month_name(self, month_index):
+        if month_index >= len(self.__month_dict):
+            print("Index value is bigger than the days list size")
+        months = list(self.__month_dict.keys())
+        return months[month_index]
+
+
     def refine_day_name(self, week_day_name):
         day_name = week_day_name
         if week_day_name[-1] == 's':

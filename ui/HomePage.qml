@@ -10,7 +10,7 @@ Item{
         target:progressPage
         function onExportPressed()
         {
-          dropDownPage.sendValues()
+          dropDownPage.startExport()
         }
     }
 
@@ -18,6 +18,7 @@ Item{
         anchors.fill:parent
 
         DialogPage{
+            id:dialogePage
             Layout.fillWidth : true
             Layout.preferredHeight : 70
             Layout.margins: 10

@@ -17,6 +17,8 @@ Item
         }
     }
 
+    signal folderPathChanged(string path)
+
     Rectangle
     {
         anchors.fill:parent
@@ -31,6 +33,7 @@ Item
             onAccepted: {
                 //console.log("User has selected " + dialogFile.folder);
                 jsonsFolderpathTextInput.text = dialogFile.folder
+                folderPathChanged(dialogFile.folder)
             }
         }
 
