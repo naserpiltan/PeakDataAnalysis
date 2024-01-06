@@ -159,6 +159,8 @@ class PeakHourExtractor:
 
         return "- to -"
 
+    def get_peak_hour_index(self):
+        return self.__peak_hour_index
     def calculate_peak_hour(self):
 
         # extract median travel time of each time set and save in a dict

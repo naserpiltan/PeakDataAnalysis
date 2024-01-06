@@ -141,7 +141,7 @@ Item
 
         function onValueChanged()
         {
-            controller.setSpeedPercentileThreshold(sampleSizeSPin.value)
+            controller.setSpeedPercentileThreshold(speedPercentileSPin.value)
         }
     }
 

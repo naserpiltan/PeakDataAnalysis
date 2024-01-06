@@ -4,14 +4,14 @@ import json_manager
 class Controller(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
-        init_value = bool(0)
+        init_value = bool(True)
         self._label_name = ["Initial Value", "second Value"]
         self._labelNameChanged = pyqtSignal(str)
         self.__days_indexes = [init_value]*7  # number of days
         self.__months_indexes = [init_value]*12  # number of months
         self.__day_time_indexes = [init_value]*2  # am-pm
-        self.__public_holidays_indexes = [init_value]*12 #number of public holidays
-        self.__school_holidays_indexes = [init_value]*9
+        self.__public_holidays_indexes = [False]*9 #number of public holidays
+        self.__school_holidays_indexes = [False]*9
         self.__frc_indexes = [init_value]*9
 
         self.__speed_percentile_time_sets_indexes_am = [init_value] * 20
@@ -49,6 +49,7 @@ class Controller(QObject):
                                      self.__sample_size_check_Index,
                                      self.__classification_index,
                                      self.__sample_size_value)
+        self.__jsonManager.read_json_files()
 
     @pyqtSlot(str)
     def setJSONSFolderPath(self, folder_path):
@@ -122,7 +123,7 @@ class Controller(QObject):
 
     @pyqtSlot(int)
     def setSpeedPercentileThreshold(self, speed_percentile):
-        print("speed percentile: ", speed_percentile)
+        print("speed percentile thresh: ", speed_percentile)
         self.__speed_percentile_diff_thresh = speed_percentile
 
     @pyqtProperty(list)

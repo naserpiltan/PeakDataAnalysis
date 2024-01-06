@@ -12,6 +12,8 @@ from peak_hour_extractor import PeakHourExtractor, TimeType
 
 class JsonManager:
     def __init__(self, json_folder_path: str):
+        if len(json_folder_path) == 0:
+            json_folder_path = "C:/Users/TDNA/Desktop/PeakDataAalysis/test"
         self.__json_folder_path = json_folder_path
         self.__json_postfix = ".json"
         self.__json_files_list = []
@@ -46,14 +48,13 @@ class JsonManager:
         self.__sample_size_time_sets_indexes_pm = None
 
         self.__classification_index = 0
-        self.__sample_size_value = 0
+        self.__sample_size_threshold = 0
         self.__speed_percentile_diff_thresh = 0
         self.__sample_size_check_Index = 0
+        self.__day_time_types = ["AM", "PM"]
 
         self.__get_json_files_list()
-        self.read_json_files()
 
-        self.__day_time_types = ["AM", "PM"]
 
     def set_lists(self,
                   days_indexes,
@@ -85,8 +86,11 @@ class JsonManager:
         self.__speed_percentile_diff_thresh = s_p_diff_threshold
 
         self.__classification_index = classification_index
-        self.__sample_size_value = sample_size
+        self.__sample_size_threshold = sample_size
         self.__sample_size_check_Index = s_s_check_index
+        self.__excel_exporter.set_similarity_criteria_index(self.__classification_index)
+        self.__holidays_manager.set_holidays_indexes(public_h_indexes,
+                                                     school_h_indexes)
         print("Lists are set")
 
     def __get_json_files_list(self):
@@ -133,10 +137,78 @@ class JsonManager:
             if not state:
                 continue
 
-            if frc == self.__day_time_types[frc_index]:
+            if frc == frc_index:
                 return True
 
         return False
+
+    def __is_speed_percentile_included(self, segment_time_results, time_type):
+
+        # 20 time sets
+        time_sets_indexes = []
+        if time_type == TimeType.AM:
+            time_sets_indexes = self.__speed_percentile_time_sets_indexes_am
+        else:
+            time_sets_indexes = self.__speed_percentile_time_sets_indexes_pm
+
+        # if none of the items is True, it means all the time sets are excluded
+        if not any(time_sets_indexes):
+            return False
+
+        result = True
+        for s_p_index, state in enumerate(time_sets_indexes):
+            if not state:
+                continue
+
+            percentile_list = segment_time_results[s_p_index]["speedPercentiles"]
+
+            percentile_lower_bound = 0
+            percentile_upper_bound = 18
+            percentile_diff = abs(int(percentile_list[percentile_upper_bound]) -
+                                  int(percentile_list[percentile_lower_bound]))
+
+            if percentile_diff < self.__speed_percentile_diff_thresh:
+                result = False
+                break
+
+        return result
+
+
+    def __is_time_set_sample_size_included(self, segment_time_results, time_type):
+
+        # 20 time sets
+        time_sets_indexes = []
+        if time_type == TimeType.AM:
+            time_sets_indexes = self.__sample_size_time_sets_indexes_am
+        else:
+            time_sets_indexes = self.__sample_size_time_sets_indexes_pm
+
+        # if none of the items is True, it means all the time sets are excluded
+        if not any(time_sets_indexes):
+            return False
+
+        result = True
+        for s_s_index, state in enumerate(time_sets_indexes):
+            if not state:
+                continue
+
+            sample_size = int(segment_time_results[s_s_index]["sampleSize"])
+
+            if sample_size < self.__sample_size_threshold:
+                result = False
+                break
+
+        return result
+
+    def __is_peak_hour_sample_size_included(self, segment_time_results, peak_hour_index):
+        if peak_hour_index < 0:
+            return False
+
+        peak_hour_sample_size = segment_time_results[peak_hour_index]["sampleSize"]
+        if peak_hour_sample_size < self.__sample_size_threshold :
+            return False
+        return True
+
 
     def read_json_files(self):
         for file_index, file_path in enumerate(self.__json_files_list):
@@ -167,12 +239,14 @@ class JsonManager:
                         date_from = dr['from']
                         date_from_pd = pd.to_datetime(date_from)
                         date_to = dr['to']
-                        day = str(str(dr['name']).split(" ")[0]).split("-")[0]
+                        name = str(dr['name'])
+                        name = name.replace("- ","-")
+                        day = str(name.split(" ")[0]).split("-")[0]
                         #there are some typos in the name o
                         day = self.__date_time_manager.refine_day_name(day)
-                        am_pm = str(str(dr['name']).split(" ")[0]).split("-")[1]
-                        month = str(str(dr['name']).split(" ")[0]).split("-")[2]
-                        year = str(dr['name']).split(" ")[1]
+                        am_pm = str(name.split(" ")[0]).split("-")[1]
+                        month = str(name.split(" ")[0]).split("-")[2]
+                        year = name.split(" ")[1]
                         date_range = date_from + " to " + date_to
                         is_public_holidays = self.__holidays_manager.is_public_holiday(year, month, day)
                         is_school_holidays = self.__holidays_manager.is_school_holiday(year, month, day)
@@ -185,9 +259,14 @@ class JsonManager:
                         continue
                     if not self.__is_month_name_included(month):
                         continue
-                    if self.__is_day_time_included(am_pm):
+                    if not self.__is_day_time_included(am_pm):
                         continue
 
+                    if not self.__holidays_manager.is_public_holiday_included(year, month, day):
+                        continue
+
+                    if not self.__holidays_manager.is_school_holiday_included(year, month, day):
+                        continue
 
                     for segment in segment_results:
                         segment_id = segment['segmentId']
@@ -207,19 +286,33 @@ class JsonManager:
                         end_lat = shape[-1]['latitude']
                         end_long = shape[-1]['longitude']
 
-                        segment_time_results = segment.get('segmentTimeResults')
                         time_type = TimeType.AM
                         if am_pm == "PM":
                             time_type = TimeType.PM
 
+                        segment_time_results = segment.get('segmentTimeResults')
+
+                        if not self.__is_speed_percentile_included(segment_time_results,time_type):
+                            continue
+
                         peak_hour_finder = PeakHourExtractor(segment_time_results, time_type)
                         peak_hour = peak_hour_finder.calculate_peak_hour()
+                        peak_hour_index = peak_hour_finder.get_peak_hour_index()
                         peak_period_1_hour_a = peak_hour_finder.get_peak_period_1_hour_a()
                         peak_period_2_hour_a = peak_hour_finder.get_peak_period_2_hour_a()
                         peak_period_1_hour_b = peak_hour_finder.get_peak_period_1_hour_b()
 
                         is_percentile_reliable = peak_hour_finder.is_percentile_reliable()
                         is_sample_size_reliable = peak_hour_finder.is_sample_size_reliable()
+
+                        # check for peak hour
+                        if self.__sample_size_check_Index == 0:
+                            if not self.__is_peak_hour_sample_size_included(segment_time_results, peak_hour_index):
+                                continue
+                        #check for timeset
+                        else:
+                            if not self.__is_time_set_sample_size_included(segment_time_results, time_type):
+                                continue
 
                         self.__append_to_export_columns_dict(segment_id, day, month, date_range, street_name, start_lat,
                                                              start_long, end_lat, end_long, distance, speed_limit,
@@ -229,6 +322,7 @@ class JsonManager:
                                                              peak_period_2_hour_a, peak_period_1_hour_b,
                                                              is_sample_size_reliable, is_percentile_reliable)
         self.__excel_exporter.write(self.__export_columns_dict)
+        print("Jsons will be written here")
 
 
     def __init_export_columns_dict(self):

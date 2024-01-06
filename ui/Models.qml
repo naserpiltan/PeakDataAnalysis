@@ -13,36 +13,37 @@ Item {
     property alias timeSetsPmModel: timeSetsPmModel
     property alias classificationModel: classificationModel
     property alias sampleSizeSearchModel: sampleSizeSearchModel
+    property bool initialState: true
 
     ListModel {
         id: daysModel
         ListElement {
             text: 'Monday'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'Tuesday'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'Wednesday'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'Thursday'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'Friday'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'Saturday'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'Sunday'
-            checked: false
+            checked: true
         }
     }
 
@@ -51,51 +52,51 @@ Item {
         id: monthsModel
         ListElement {
             text: 'January'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'February'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'March'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'April'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'May'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'June'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'July'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'August'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'September'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'October'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'November'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'December'
-            checked: false
+            checked: true
         }
     }
 
@@ -103,52 +104,32 @@ Item {
         id: dayTimeModel
         ListElement {
             text: 'AM'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'PM'
-            checked: false
+            checked: true
         }
     }
 
     ListModel {
         id: publicHolidayModel
         ListElement {
-            text: 'Christmass Day 2022'
+            text: 'New Year Holidays 2022'
             checked: false
         }
         ListElement {
-            text: 'Boxing Day 2022'
-            checked: false
-        }
-
-        ListElement {
-            text: 'New Year Day'
+            text: 'Auckland Anniversary 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Day after New Year Day'
+            text: 'Waitangi Day 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Aukland Anniversary'
-            checked: false
-        }
-
-        ListElement {
-            text: 'Waitangi Day'
-            checked: false
-        }
-
-        ListElement {
-            text: 'Good Friday'
-            checked: false
-        }
-
-        ListElement {
-            text: 'Easter Monday'
+            text: 'Good Friday-Easter Monday'
             checked: false
         }
 
@@ -157,71 +138,66 @@ Item {
             checked: false
         }
 
-
         ListElement {
             text: 'King\'s Birthday'
             checked: false
         }
 
         ListElement {
-            text: 'labour Day'
+            text: 'Matariki'
             checked: false
         }
 
         ListElement {
-            text: 'Christmass Day 2023'
-            checked: false
-        }
-        ListElement {
-            text: 'Boxing Day 2023'
+            text: 'Labour Day'
             checked: false
         }
 
+
+        ListElement {
+            text: 'New Year Holidays 2023'
+            checked: false
+        }
     }
 
     ListModel {
         id: schoolHolidayModel
         ListElement {
-            text: 'Term 4, 2022'
+            text: 'Term 4 Holidays, 2022'
             checked: false
         }
         ListElement {
-            text: 'Summer Holidays 2022-2023'
-            checked: false
-        }
-
-        ListElement {
-            text: 'Term 1, 2023'
+            text: 'Term 1 Holidays, 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Autumn Holidays 2023'
+            text: 'Term 2 Holidays, 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Term 2, 2023'
+            text: 'Term 3 Holidays, 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Winter Holidays 2023'
+            text: 'Term 4 Holidays, 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Term 3, 2023'
+            text: 'School start Term 1, 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Spring Holidays 2023'
+            text: 'School start Term 2, 2023'
             checked: false
         }
 
         ListElement {
-            text: 'Term 4, 2023'
+            text: 'School start Term 4, 2023'
             checked: false
         }
     }
@@ -230,45 +206,45 @@ Item {
         id: frcModel
         ListElement {
             text: 'FRC type: 0'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'FRC type: 1'
-            checked: false
+            checked: true
         }
         ListElement {
             text: 'FRC type: 2'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'FRC type: 3'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'FRC type: 4'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'FRC type: 5'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'FRC type: 6'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'FRC type: 7'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'FRC type: 8'
-            checked: false
+            checked: true
         }
     }
 
@@ -276,91 +252,91 @@ Item {
         id: timeSetsAmModel
         ListElement {
             text: '5:00-5:15'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '5:15-5:30'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '5:30-5:45'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '5:45-6:00'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '6:00-6:15'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '6:15-6:30'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '6:30-6:45'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '6:45-7:00'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '7:00-7:15'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '7:15-7:30'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '7:30-7:45'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '7:45-8:00'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '8:00-8:15'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '8:15-8:30'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '8:30-8:45'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '8:45-9:00'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '9:00-9:15'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '9:15-9:30'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '9:30-9:45'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '9:45-10:00'
-            checked: false
+            checked: true
         }
     }
 
@@ -368,91 +344,91 @@ Item {
         id: timeSetsPmModel
         ListElement {
             text: '14:00-14:15'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '14:15-14:30'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '14:30-14:45'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '14:45-15:00'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '15:00-15:15'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '15:15-15:30'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '15:30-15:45'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '15:45-16:00'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: '16:00-16:15'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '16:15-16:30'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '16:30-16:45'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '16:45-17:00'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '17:00-17:15'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '17:15-17:30'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '17:30-17:45'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '17:45-18:00'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '18:00-18:15'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '18:15-18:30'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '18:30-18:45'
-            checked: false
+            checked: true
         }
         ListElement {
             text: '18:45-19:00'
-            checked: false
+            checked: true
         }
     }
 
@@ -461,22 +437,22 @@ Item {
         id: classificationModel
         ListElement {
             text: 'Peak hour similarity'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'Peak period 1 hour A'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'Peak period 2 hour A'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'Peak period 1 hour B'
-            checked: false
+            checked: true
         }
     }
 
@@ -485,12 +461,12 @@ Item {
         id:sampleSizeSearchModel
         ListElement {
             text: 'Peak hour'
-            checked: false
+            checked: true
         }
 
         ListElement {
             text: 'Time sets'
-            checked: false
+            checked: true
         }
     }
 }
