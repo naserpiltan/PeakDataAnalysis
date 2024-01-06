@@ -163,6 +163,45 @@ Item
         }
     }
 
+    Connections
+    {
+        target: controller
+
+        function onProcessIsBeingDone(state)
+        {
+            if(state === true)
+            {
+                notificationPopup.notificationText = "Process is being done, please wait till in finishes."
+                notificationPopup.open()
+            }
+
+            else
+            {
+                notificationPopup.notificationText = "Process just started."
+                notificationPopup.open()
+            }
+        }
+
+        function onProgressValueChanged(value)
+        {
+           progressPage.value = value
+        }
+
+        function onExportFinished()
+        {
+            notificationPopup.notificationText = "Export is done."
+            notificationPopup.open()
+        }
+
+        function onUrlIsEmpty()
+        {
+            notificationPopup.notificationText = "Select the JSON files folder."
+            notificationPopup.open()
+        }
+
+
+    }
+
     Models
     {
         id:models

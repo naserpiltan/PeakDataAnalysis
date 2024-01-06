@@ -7,13 +7,21 @@ from holidays_manager import HolidaysManager
 from date_time_manager import DateTimeManager
 from excel_exporter import ExcelExporter
 from peak_hour_extractor import PeakHourExtractor, TimeType
+from PyQt6 import QtCore
+from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, pyqtProperty, QStringListModel,QVariant ,QAbstractListModel,Qt , QUrl
 
 # time set is not required
 
-class JsonManager:
-    def __init__(self, json_folder_path: str):
+class JsonManager(QObject):
+
+    progress_value_changed = QtCore.pyqtSignal(int)
+
+    def __init__(self, json_folder_path: str,  parent=None):
+        super().__init__(parent)
         if len(json_folder_path) == 0:
             json_folder_path = "C:/Users/TDNA/Desktop/PeakDataAalysis/test"
+
+        # whenever one json file gets processed, this signal will be emitted
         self.__json_folder_path = json_folder_path
         self.__json_postfix = ".json"
         self.__json_files_list = []
@@ -213,6 +221,10 @@ class JsonManager:
     def read_json_files(self):
         for file_index, file_path in enumerate(self.__json_files_list):
             print("file path ", file_path, " : ", file_index+1, " / ", len(self.__json_files_list))
+
+            progress_value = int((file_index+1)/len(self.__json_files_list)*100)
+            self.progress_value_changed.emit(progress_value)
+
             with open(file_path, 'rb') as file:
                 objects = ijson.items(file, '')
                 for obj in objects:

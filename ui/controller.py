@@ -1,12 +1,24 @@
 from PyQt6.QtCore import QObject, pyqtSlot, pyqtSignal, pyqtProperty, QStringListModel,QVariant ,QAbstractListModel,Qt , QUrl
+from numpy.ma.core import take
+from PyQt6 import QtCore
+
 import json_manager
+import threading
 
 class Controller(QObject):
+    _labelNameChanged = QtCore.pyqtSignal(str)
+
+    processIsBeingDone = QtCore.pyqtSignal(bool)
+    progressValueChanged = QtCore.pyqtSignal(int)
+    exportFinished = QtCore.pyqtSignal()
+    urlIsEmpty = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         init_value = bool(True)
         self._label_name = ["Initial Value", "second Value"]
-        self._labelNameChanged = pyqtSignal(str)
+
+
         self.__days_indexes = [init_value]*7  # number of days
         self.__months_indexes = [init_value]*12  # number of months
         self.__day_time_indexes = [init_value]*2  # am-pm
@@ -25,15 +37,13 @@ class Controller(QObject):
         self.__sample_size_check_Index = 0
         self.__jsons_folders_path = ""
         self.__jsonManager = None
+        self.__process_is_being_done_flag = False
+        self.__process_thread = threading.Thread(target=self.__start_processing)
 
 
     # Define a method available to QML
 
-    @pyqtSlot()
-    def startExport(self):
-
-        print("Export is being done")
-        self.__jsonManager = json_manager.JsonManager(self.__jsons_folders_path)
+    def __start_processing(self):
 
         self.__jsonManager.set_lists(self.__days_indexes,
                                      self.__months_indexes,
@@ -50,6 +60,32 @@ class Controller(QObject):
                                      self.__classification_index,
                                      self.__sample_size_value)
         self.__jsonManager.read_json_files()
+        self.__process_is_being_done_flag = False
+        self.exportFinished.emit()
+
+    @pyqtSlot()
+    def startExport(self):
+
+        if self.__process_is_being_done_flag:
+            print("Process is being done, pleas be patient till it finishes.")
+            self.processIsBeingDone.emit(True)
+            return
+
+        if len(self.__jsons_folders_path) == 0:
+            self.urlIsEmpty.emit()
+            return
+
+        print("Export is being done")
+        self.processIsBeingDone.emit(False)
+        self.__process_is_being_done_flag = True
+        self.__jsonManager = json_manager.JsonManager(self.__jsons_folders_path)
+        self.__jsonManager.progress_value_changed.connect(self.progressValueChanged)
+
+        self.__process_thread.daemon = True
+        self.__process_thread.start()
+
+    # def progress_value_changed(self, val):
+    #     self.progressValueChanged.emit(val)
 
     @pyqtSlot(str)
     def setJSONSFolderPath(self, folder_path):

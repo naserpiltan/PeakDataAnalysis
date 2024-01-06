@@ -57,6 +57,9 @@ Item {
                 Layout.rightMargin: 10
                 //Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 Layout.bottomMargin: 2
+                from: 0
+                to: 100
+
 
             }
         }
