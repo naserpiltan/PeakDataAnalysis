@@ -81,6 +81,7 @@ class Controller(QObject):
         self.__jsonManager = json_manager.JsonManager(self.__jsons_folders_path)
         self.__jsonManager.progress_value_changed.connect(self.progressValueChanged)
 
+        self.__process_thread = threading.Thread(target=self.__start_processing)
         self.__process_thread.daemon = True
         self.__process_thread.start()
 

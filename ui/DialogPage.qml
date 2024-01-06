@@ -27,7 +27,7 @@ Item
 
         FolderDialog {
             id:dialogFile;
-            title: "Please select folder which contains positive training data";
+            title: "Please select the older which contains JSON files";
             //folder: shortcuts.home;
 
             onAccepted: {
@@ -43,7 +43,7 @@ Item
             Button
             {
                 id:fileDialogButton
-                text: "Select the JSON file(s)"
+                text: "Select the JSON files folder"
                 Layout.leftMargin: 5
             }
 
