@@ -191,6 +191,7 @@ Item
         {
             notificationPopup.notificationText = "Export is done."
             notificationPopup.open()
+            progressPage.value = 0
         }
 
         function onUrlIsEmpty()
