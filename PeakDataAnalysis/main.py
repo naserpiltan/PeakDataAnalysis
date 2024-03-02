@@ -8,7 +8,8 @@ from json_manager import JsonManager
 def main(json_folder_path, links_folder_path, area_local_board_file_path):
 
     json_manager = JsonManager(json_folder_path, links_folder_path, area_local_board_file_path)
-    json_manager.read_json_files()
+    #json_manager.read_json_files()
+    json_manager.read_from_database()
 
 
 if __name__ == "__main__":

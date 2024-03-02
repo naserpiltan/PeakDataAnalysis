@@ -281,25 +281,23 @@ class PeakHourExtractor:
         night_thresh = datetime.strptime("18:00", "%H:%M")
 
         # all the segments of a link
-        for index, time_set_average_travel_time_list_list in enumerate(self.__time_set_average_travel_time_list_list):
+        for index, (time_set, average_travel_time) in enumerate(self.__time_set_average_travel_time_list_list):
 
-            for (time_set, average_travel_time) in time_set_average_travel_time_list_list:
+            start_time = time_set.split('-')[0]
 
-                start_time = time_set.split('-')[0]
+            start_time = datetime.strptime(str(start_time), "%H:%M")
 
-                start_time = datetime.strptime(str(start_time), "%H:%M")
+            # if time set is between 10 and 14 or is bigger than 19 it must be discarded
+            # if (morning_thresh <= start_time < middya_thresh) or start_time > night_thresh:
+            #     continue
 
-                # if time set is between 10 and 14 or is bigger than 19 it must be discarded
-                # if (morning_thresh <= start_time < middya_thresh) or start_time > night_thresh:
-                #     continue
+            time_increment = timedelta(minutes=15)
 
-                time_increment = timedelta(minutes=15)
+            next_time = start_time + time_increment
 
-                next_time = start_time + time_increment
+            time_set_value = start_time.strftime("%H:%M") + "-" + next_time.strftime("%H:%M")
 
-                time_set_value = start_time.strftime("%H:%M") + "-" + next_time.strftime("%H:%M")
-
-                self.__time_set_travel_times[time_set_value].append(average_travel_time)
+            self.__time_set_travel_times[time_set_value].append(average_travel_time)
 
         sum_travel_times = []
         for time_set_value in self.__time_set_travel_times.keys():

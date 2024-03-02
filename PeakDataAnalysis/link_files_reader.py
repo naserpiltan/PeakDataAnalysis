@@ -12,7 +12,6 @@ class LinkFileReader:
         self.__link_segments_dict = {}
 
         self.__get_json_files_list()
-        self.__read_json_files()
 
     def __get_json_files_list(self):
 
@@ -42,6 +41,7 @@ class LinkFileReader:
                             self.__link_segments_dict[link_id].append(segment_id)
 
     def get_links_dict(self):
+        self.__read_json_files()
         return self.__link_segments_dict
 
 
