@@ -48,7 +48,7 @@ class ExcelExporter:
             worksheet.set_row(0, 25)
             worksheet.set_column(col_num, col_num, 25)
 
-            if 3 <= col_num <= 9:
+            if 4 <= col_num <= 10:
                 worksheet.write(0, col_num, key, float_cell_format)
                 worksheet.write_column(1, col_num, value, float_cell_format)
 

@@ -20,50 +20,7 @@ import json
 from decimal import Decimal
 from datetime import datetime, timedelta
 
-class CustomJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            # Convert Decimal objects to strings to maintain precision
-            return str(obj)
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
-def setup_database(db_path="data.db"):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    # Drop the existing table if you're okay with losing the data
-    cursor.execute('''DROP TABLE IF EXISTS link_segments''')
-
-    # Create a new table with the updated schema
-    cursor.execute('''CREATE TABLE link_segments
-                          (link_id TEXT, day TEXT, month TEXT, year TEXT, is_weekday BOOLEAN,
-                           is_public_holidays BOOLEAN, is_school_holidays BOOLEAN, time_sets_ids TEXT, average_travel_times TEXT)''')
-    conn.commit()
-    conn.close()
-
-
-def insert_into_database(link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays,
-                         segment_time_sets_id_list, segment_average_travel_time_list):
-
-    conn = sqlite3.connect("E:/TDNA_Projects/Peak_data_analysis/db/tdna.db")
-    cursor = conn.cursor()
-
-    segment_time_sets_id_str = json.dumps(segment_time_sets_id_list, cls=CustomJSONEncoder)
-    segment_average_travel_time_str = json.dumps(segment_average_travel_time_list, cls=CustomJSONEncoder)
-
-    # Make sure the table schema includes columns for these serialized lists
-    cursor.execute('''INSERT INTO link_segments (link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays, time_sets_ids, average_travel_times)
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                   (link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays,
-                    segment_time_sets_id_str, segment_average_travel_time_str))
-
-    conn.commit()
-    conn.close()
-
-# time set is not required
+from DBConnection import DatabaseWrapper
 
 class JsonManager(QObject):
     progress_value_changed = QtCore.pyqtSignal(int)
@@ -72,7 +29,6 @@ class JsonManager(QObject):
         super().__init__(parent)
 
         # whenever one json file gets processed, this signal will be emitted
-        setup_database("E:/TDNA_Projects/Peak_data_analysis/db/tdna.db")
         self.__jsons_root_folder_path = json_folder_path
         self.__json_postfix = ".json"
         self.__day_json_files_dict = {}
@@ -81,9 +37,11 @@ class JsonManager(QObject):
 
         self.__area_reader = AreaReader(area_file_path)
         self.__links_file_reader = LinkFileReader(links_folder_path)
-        self.__links_segments_ids_dict = self.__links_file_reader.get_links_dict()
-        lnk_dict = self.__links_segments_ids_dict
         self.__links_segments_list = {}
+
+        self.__links_segments_ids_dict = {}
+
+        self.__database_wrapper = DatabaseWrapper(self.__jsons_root_folder_path)
 
         self.__init_export_columns()
         self.__init_export_columns_dict()
@@ -275,7 +233,7 @@ class JsonManager(QObject):
             day_abbr = day[:3]
             day_folder_path = os.path.join(self.__jsons_root_folder_path, day_abbr)
             if not os.path.exists(day_folder_path):
-                print("Sub folder Path doesn't exist, path ", day_folder_path)
+                print("Sub-folder Path doesn't exist, path ", day_folder_path)
                 continue
             for file in os.listdir(day_folder_path):
                 if file.endswith(self.__json_postfix):
@@ -309,7 +267,7 @@ class JsonManager(QObject):
         avg_minutes = int(avg_minutes % 60)
 
         avg_date_time = f"{avg_hours}:{avg_minutes}"
-        start_time = datetime.strptime(avg_date_time, "%H:%M")
+        avg_date_time = datetime.strptime(avg_date_time, "%H:%M")
 
         # Construct a new datetime object for the average time (date part can be arbitrary)
         #avg_datetime = datetime(2022, 1, 1, avg_hours, avg_minutes)
@@ -333,23 +291,11 @@ class JsonManager(QObject):
 
                 peak_hour_start = str(peak_hour).split("-")[0]
                 peak_hour_start = datetime.strptime(peak_hour_start, "%H:%M")
-                # hour = str(peak_hour_start).split(":")[0]
-                # minute = str(peak_hour_start).split(":")[1]
-                # hour = int(hour)
-                # minute = int(minute) / 60
-                # peak_hour_digit_time = hour + minute
-
                 peak_interval_start = str(peak_period).split("-")[0]
                 peak_interval_start = datetime.strptime(peak_interval_start, "%H:%M")
 
-                # hour = str(peak_interval_start).split(":")[0]
-                # minute = str(peak_interval_start).split(":")[1]
-                # hour = int(hour)
-                # minute = int(minute) / 60
-                # peak_period_digit_time = hour + minute
-
                 peak_hour_average_travel_times_list.append(peak_hour_start)
-                peak_interval_average_travel_times_list.append(peak_hour_start)
+                peak_interval_average_travel_times_list.append(peak_interval_start)
 
             peak_hours_average = 0
             peak_intervals_average = 0
@@ -370,31 +316,27 @@ class JsonManager(QObject):
 
         time_delta = peak_hour_start - peak_hour_average
         total_seconds = time_delta.total_seconds()
+        sign = "" if total_seconds >= 0 else "-"
         # Calculate hours, minutes, and seconds
+        total_seconds = abs(total_seconds)
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
         seconds = int(total_seconds % 60)
-        peak_hour_seasonality = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        peak_hour_seasonality = f"{sign}{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-
-        #peak_hour_seasonality =
-
-        # hour = str(peak_hour_start).split(":")[0]
-        # minute = str(peak_hour_start).split(":")[1]
-        # hour = int(hour)
-        # minute = int(minute) / 60
-        # digit_time = hour + minute
-        # peak_hour_seasonality = float(digit_time) - float(peak_hour_average)
 
         peak_interval_start = str(peak_interval).split("-")[0]
         peak_interval_start = datetime.strptime(peak_interval_start, "%H:%M")
         time_delta = peak_interval_start - peak_interval_average
         total_seconds = time_delta.total_seconds()
+        sign = "" if total_seconds >= 0 else "-"
+        total_seconds = abs(total_seconds)
+
         # Calculate hours, minutes, and seconds
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
         seconds = int(total_seconds % 60)
-        peak_interval_seasonality = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        peak_interval_seasonality = f"{sign}{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
         # hour = str(peak_interval_start).split(":")[0]
@@ -424,6 +366,23 @@ class JsonManager(QObject):
 
         return time_string
 
+    def get_day_time(self, peak_hour):
+        am_thresh = datetime.strptime("10:00", "%H:%M")
+        middya_thresh = datetime.strptime("14:00", "%H:%M")
+        pm_thresh = datetime.strptime("19:00", "%H:%M")
+
+        peak_hour_start = str(peak_hour).split("-")[0]
+        peak_hour_start = datetime.strptime(peak_hour_start, "%H:%M")
+
+        if peak_hour_start < am_thresh:
+            return "AM"
+        elif am_thresh <= peak_hour_start < middya_thresh:
+            return "MiddayPeak"
+        elif middya_thresh <= peak_hour_start < pm_thresh:
+            return "PM"
+        else:
+            return "EveningPeak"
+
     def __process_link_segments(self, links_segments_list_dict):
 
         seasonality_dict = {}
@@ -452,7 +411,8 @@ class JsonManager(QObject):
                     continue
 
                 if peaks[2] is not None:
-                    peak_hour_day_time = 'AM' if index == 0 else 'PM'
+                    #peak_hour_day_time = 'AM' if index == 0 else 'PM'
+                     peak_hour_day_time = self.get_day_time(peaks[index])
 
                 row = [link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays,
                        peaks[index], peaks[index + 1], peaks[index + 4], peaks[index + 5],
@@ -491,12 +451,36 @@ class JsonManager(QObject):
 
             self.__append_to_export_columns_dict(row)
 
+    def read_from_database(self):
+        for day_abbr in self.__day_json_files_dict.keys():
+
+            db_path = str(self.__jsons_root_folder_path)+"/"+str(day_abbr)+"/"+str(day_abbr)+".db"
+            if not os.path.exists(db_path):
+                print("DB path does not exist: ", db_path)
+                continue
+            print("Reading form db with path: ", db_path)
+
+            database_wrapper = DatabaseWrapper(db_path, False)
+            now = time.time()
+            day_result = database_wrapper.fetch_all_segment_data()
+            end = time.time()
+            print("took :", end - now)
+            self.__process_link_segments(day_result)
+
+        self.__excel_exporter.write(self.__export_columns_dict)
+
+
+
     def read_json_files(self):
+
+        self.__links_segments_ids_dict = self.__links_file_reader.get_links_dict()
 
         for day_abbr in self.__day_json_files_dict.keys():
             json_files_list = self.__day_json_files_dict[day_abbr]
 
             links_segments_list_dict = {}
+            db_path = str(self.__jsons_root_folder_path)+"/"+str(day_abbr)+"/"+str(day_abbr)+".db"
+            database_wrapper = DatabaseWrapper(db_path)
 
             for file_index, file_path in enumerate(json_files_list):
 
@@ -524,6 +508,7 @@ class JsonManager(QObject):
 
                         network = obj.get('network', {})
                         segment_results = network.get('segmentResults', [])
+                        #print("len", len(times_sets_dict))
 
                         # day,month,am_pm and timerange are fixed for each segment
 
@@ -567,8 +552,8 @@ class JsonManager(QObject):
 
                             for link_id in self.__links_segments_ids_dict.keys():
 
-                                if link_id != "C036-C061":
-                                    continue
+                                # if link_id != "C036-C061":
+                                #     continue
 
                                 segment_ids_list = self.__links_segments_ids_dict[link_id]
 
@@ -580,31 +565,33 @@ class JsonManager(QObject):
                             if not segment_id_is_valid:
                                 continue
 
-                            segment_time_sets_id_list = []
-                            segment_average_travel_time_list = []
                             time_set_average_travel_time_list = []
                             segment_time_results_list = segment.get('segmentTimeResults')
+                            #print("Segment id ", segment['segmentId'])
                             for segment_time in segment_time_results_list:
                                 time_set_id = segment_time["timeSet"]
                                 time_set = times_sets_dict[time_set_id]
                                 average_travel_time = segment_time['averageTravelTime']
+                                #print("id ", time_set_id, " time set ", time_set, " average_travel_time ", average_travel_time)
 
-                                #segment_time_sets_id_list.append(time_set)
-                                #segment_average_travel_time_list.append(average_travel_time)
-                                time_set_average_travel_time_list.append((time_set, average_travel_time))
+                                #time_set_average_travel_time_list.append((time_set, average_travel_time))
 
-                            key = (link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays)
+                                key = (link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays)
 
-                            if key not in links_segments_list_dict.keys():
-                                links_segments_list_dict[key] = []
+                                if key not in links_segments_list_dict.keys():
+                                    links_segments_list_dict[key] = []
 
-                            links_segments_list_dict[key].append(time_set_average_travel_time_list)
+                                links_segments_list_dict[key].append((time_set, average_travel_time))
 
-                            #insert_into_database(link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays, segment_time_sets_id_list, segment_average_travel_time_list)
                 file.close()
                 end = time.time()
                 print("took :", end - now)
 
+            #self.__database_wrapper.insert_into_database(links_segments_list_dict)
+            database_wrapper.insert_into_database(links_segments_list_dict)
+            #print("inserted in the database")
+            #result = self.__database_wrapper.fetch_all_segment_data()
+            #print(len(result))
             self.__process_link_segments(links_segments_list_dict)
 
         self.__excel_exporter.write(self.__export_columns_dict)
