@@ -22,7 +22,19 @@ def concatenate_excel_files(directory, output_file):
     concatenated_df.to_excel(output_file, index=False)
 
 
-# Example usage
-directory = 'E:/TDNA_Projects/Peak_data_analysis/data/all_data_final/excel/peak_hour_classification'
-output_file = 'E:/TDNA_Projects/Peak_data_analysis/data/all_data_final/excel/peak_hour_classification/peak_hour_classification_aggregated.xlsx'
-concatenate_excel_files(directory, output_file)
+# # Example usage
+# directory = 'E:/TDNA_Projects/Peak_data_analysis/data/all_data_final/excel/peak_hour_classification'
+# output_file = 'E:/TDNA_Projects/Peak_data_analysis/data/all_data_final/excel/peak_hour_classification/peak_hour_classification_aggregated.xlsx'
+# concatenate_excel_files(directory, output_file)
+
+
+# Specify the path to your Excel file
+excel_file_path = 'E:/TDNA_Projects/Peak_data_analysis/tomtomdata/excel/summary_export.xlsx'
+
+# Read the Excel file
+df = pd.read_excel(excel_file_path)
+
+# Iterate through each column and print the number of unique values
+for column in df.columns:
+    unique_values_count = df[column].nunique()
+    print(f"Column '{column}' has {unique_values_count} unique values.")

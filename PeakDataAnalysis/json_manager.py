@@ -22,10 +22,12 @@ from datetime import datetime, timedelta
 
 from DBConnection import DatabaseWrapper
 
+from PeakHourResult import ExcelRow
+
 class JsonManager(QObject):
     progress_value_changed = QtCore.pyqtSignal(int)
 
-    def __init__(self, json_folder_path: str, links_folder_path: str, area_file_path,  parent=None):
+    def __init__(self, json_folder_path: str, links_folder_path: str, area_file_path, parent=None):
         super().__init__(parent)
 
         # whenever one json file gets processed, this signal will be emitted
@@ -270,7 +272,7 @@ class JsonManager(QObject):
         avg_date_time = datetime.strptime(avg_date_time, "%H:%M")
 
         # Construct a new datetime object for the average time (date part can be arbitrary)
-        #avg_datetime = datetime(2022, 1, 1, avg_hours, avg_minutes)
+        # avg_datetime = datetime(2022, 1, 1, avg_hours, avg_minutes)
 
         return avg_date_time
 
@@ -324,7 +326,6 @@ class JsonManager(QObject):
         seconds = int(total_seconds % 60)
         peak_hour_seasonality = f"{sign}{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-
         peak_interval_start = str(peak_interval).split("-")[0]
         peak_interval_start = datetime.strptime(peak_interval_start, "%H:%M")
         time_delta = peak_interval_start - peak_interval_average
@@ -337,7 +338,6 @@ class JsonManager(QObject):
         minutes = int((total_seconds % 3600) // 60)
         seconds = int(total_seconds % 60)
         peak_interval_seasonality = f"{sign}{hours:02d}:{minutes:02d}:{seconds:02d}"
-
 
         # hour = str(peak_interval_start).split(":")[0]
         # minute = str(peak_interval_start).split(":")[1]
@@ -383,78 +383,93 @@ class JsonManager(QObject):
         else:
             return "EveningPeak"
 
+    def get_peak_and_average_data(self, peak_finder, period_start: str, period_end: str, final_rows, peak_day_time, key,
+                                  seasonality_dict):
+        peak_data = peak_finder.get_peaks(period_start, period_end)
+        average_travel_time_data = peak_finder.get_average_travel_times(peak_data.peak_hour,
+                                                                        peak_data.peak_period)
+
+        link_id, day, month, year, is_weekday, is_public_holidays, is_school_terms = key
+        seasonality_key = (link_id, day, peak_day_time)
+
+        if seasonality_key not in list(seasonality_dict.keys()):
+            seasonality_dict[seasonality_key] = []
+
+        seasonality_dict[seasonality_key].append([peak_data.peak_hour, peak_data.peak_period])
+        final_rows.append(ExcelRow(link_id, day, month, year, is_weekday, is_public_holidays, is_school_terms,
+                                   peak_data.peak_hour, peak_data.peak_period,
+                                   peak_data.peak_hour_max_quarter, peak_data.peak_period_max_quarter,
+                                   average_travel_time_data.peak_hour_average_travel_time,
+                                   average_travel_time_data.peak_period_average_travel_time,
+                                   average_travel_time_data.peak_hour_mphf,
+                                   average_travel_time_data.peak_period_mphf,
+                                   peak_day_time, 0, 0,
+                                   0, 0, 0))
+
+
+
     def __process_link_segments(self, links_segments_list_dict):
 
         seasonality_dict = {}
         final_rows = []
+
         for key in links_segments_list_dict.keys():
 
             # link_id and day and month are unique
             link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays = key
             time_set_average_travel_time_list_list = links_segments_list_dict[key]
+            if len(time_set_average_travel_time_list_list) == 0:
+                print("EMPTY: link id ", link_id, " day ", day, "month ", month)
 
-            # on weekends we only have one peak hour
-            # for other days, we will have obe peak hour for am and
-            # one for pm
-            if not is_weekday:
-                peak_hour_day_time = "WeekendPeak"
-
+            # on weekends, we only have one peak hour
+            run_version = True
             peak_hour_finder = PeakHourExtractor(time_set_average_travel_time_list_list, is_weekday)
-
-            peaks = peak_hour_finder.get_peaks()
-            averages = peak_hour_finder.get_average_travel_times(peaks[0], peaks[1], peaks[2], peaks[3])
-            step = 2
-            peak_hour_day_time = "WeekendPeak"
-            for index in range(0, int(len(peaks)/2), step):
-
-                if peaks[index] is None:
-                    continue
-
-                if peaks[2] is not None:
-                    #peak_hour_day_time = 'AM' if index == 0 else 'PM'
-                     peak_hour_day_time = self.get_day_time(peaks[index])
-
-                row = [link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays,
-                       peaks[index], peaks[index + 1], peaks[index + 4], peaks[index + 5],
-                       averages[index * 2], averages[index * 2 + 1],
-                       averages[index * 2 + 2], averages[index * 2 + 3],
-                       peak_hour_day_time]
-
-                final_rows.append(row)
-
-                seasonality_key = (link_id, day, peak_hour_day_time)
-
-                if seasonality_key not in list(seasonality_dict.keys()):
-                    seasonality_dict[seasonality_key] = []
-
-                seasonality_dict[seasonality_key].append([peaks[index], peaks[index + 1], peak_hour_day_time])
+            if is_weekday:
+                if run_version:
+                    self.get_peak_and_average_data(peak_hour_finder, "05:00", "10:00",
+                                                   final_rows, "AM", key, seasonality_dict)
+                    self.get_peak_and_average_data(peak_hour_finder, "14:00", "19:00",
+                                                   final_rows, "PM", key, seasonality_dict)
+                else:
+                    self.get_peak_and_average_data(peak_hour_finder, "05:00", "10:00",
+                                                   final_rows, "AM", key, seasonality_dict)
+                    self.get_peak_and_average_data(peak_hour_finder, "10:00", "14:00",
+                                                   final_rows, "Midday", key, seasonality_dict)
+                    self.get_peak_and_average_data(peak_hour_finder, "14:00", "19:00",
+                                                   final_rows, "PM", key, seasonality_dict)
+            else:
+                self.get_peak_and_average_data(peak_hour_finder, "09:00", "19:00",
+                                               final_rows, "WeekendPeak", key, seasonality_dict)
 
         seasonality_dict = self.get_seasonality_averages(seasonality_dict)
 
         for row in final_rows:
-            link_id = row[0]
-            day = row[1]
-            peak_hour = row[7]
-            peak_interval = row[8]
-            day_time = row[-1]
-            peak_hour_average, peak_interval_average = seasonality_dict[(link_id, day, day_time)]
-            peak_hour_seasonality, peak_interval_seasonality = self.get_seasonalities(peak_hour_average,
-                                                                                     peak_interval_average,
-                                                                                     peak_hour,
-                                                                                     peak_interval)
-            row.append(peak_hour_seasonality)
-            row.append(peak_interval_seasonality)
-            local_board, area, direction = self.__area_reader.get_localBaord_area_direction(link_id)
-            row.append(local_board)
-            row.append(area)
-            row.append(direction)
+            peak_hour_average, peak_interval_average = seasonality_dict[(row.link_id, row.day, row.peak_day_time)]
+            peak_hour_seasonality, peak_period_seasonality = self.get_seasonalities(peak_hour_average,
+                                                                                      peak_interval_average,
+                                                                                      row.peak_hour,
+                                                                                      row.peak_period)
+            row.peak_hour_seasonality = peak_hour_seasonality
+            row.peak_period_seasonality = peak_period_seasonality
+            local_board, area, direction = self.__area_reader.get_localBaord_area_direction(row.link_id)
+            row.local_board = local_board
+            row.area = area
+            row.direction = direction
 
             self.__append_to_export_columns_dict(row)
 
     def read_from_database(self):
+        self.__links_segments_ids_dict = self.__links_file_reader.get_links_dict()
+
+        links = self.__links_segments_ids_dict
+
+        links_keys = list(links.keys())
+
+        keys_list = []
+
         for day_abbr in self.__day_json_files_dict.keys():
 
-            db_path = str(self.__jsons_root_folder_path)+"/"+str(day_abbr)+"/"+str(day_abbr)+".db"
+            db_path = str(self.__jsons_root_folder_path) + "/" + str(day_abbr) + "/" + str(day_abbr) + ".db"
             if not os.path.exists(db_path):
                 print("DB path does not exist: ", db_path)
                 continue
@@ -463,6 +478,20 @@ class JsonManager(QObject):
             database_wrapper = DatabaseWrapper(db_path, False)
             now = time.time()
             day_result = database_wrapper.fetch_all_segment_data()
+
+            keys = list(day_result.keys())
+
+            tmp_keys = []
+
+            for key in keys:
+                tmp_keys.append(key[0])
+
+            tmp_keys = set(tmp_keys)
+
+            items_not_in_second_list = [item for item in links_keys if item not in tmp_keys]
+
+            keys_list.append(items_not_in_second_list)
+
             end = time.time()
             print("took :", end - now)
             self.__process_link_segments(day_result)
@@ -479,8 +508,8 @@ class JsonManager(QObject):
             json_files_list = self.__day_json_files_dict[day_abbr]
 
             links_segments_list_dict = {}
-            db_path = str(self.__jsons_root_folder_path)+"/"+str(day_abbr)+"/"+str(day_abbr)+".db"
-            database_wrapper = DatabaseWrapper(db_path)
+            db_path = str(self.__jsons_root_folder_path) + "/" + str(day_abbr) + "/" + str(day_abbr) + ".db"
+            #database_wrapper = DatabaseWrapper(db_path)
 
             for file_index, file_path in enumerate(json_files_list):
 
@@ -508,7 +537,7 @@ class JsonManager(QObject):
 
                         network = obj.get('network', {})
                         segment_results = network.get('segmentResults', [])
-                        #print("len", len(times_sets_dict))
+                        # print("len", len(times_sets_dict))
 
                         # day,month,am_pm and timerange are fixed for each segment
 
@@ -544,6 +573,9 @@ class JsonManager(QObject):
                             is_weekend = self.__holidays_manager.is_weekend(day)
                             is_weekday = not is_weekend
 
+                        if len(list(segment_results)) == 0:
+                            print("There is an empty  segment_results")
+
                         for segment in segment_results:
 
                             segment_id = segment['segmentId']
@@ -563,18 +595,19 @@ class JsonManager(QObject):
                                     segment_id_is_valid = True
                                     break
                             if not segment_id_is_valid:
+                                #print("segment id ", segment_id, " doesnt belong to any links")
                                 continue
 
                             time_set_average_travel_time_list = []
                             segment_time_results_list = segment.get('segmentTimeResults')
-                            #print("Segment id ", segment['segmentId'])
+                            # print("Segment id ", segment['segmentId'])
                             for segment_time in segment_time_results_list:
                                 time_set_id = segment_time["timeSet"]
                                 time_set = times_sets_dict[time_set_id]
                                 average_travel_time = segment_time['averageTravelTime']
-                                #print("id ", time_set_id, " time set ", time_set, " average_travel_time ", average_travel_time)
+                                # print("id ", time_set_id, " time set ", time_set, " average_travel_time ", average_travel_time)
 
-                                #time_set_average_travel_time_list.append((time_set, average_travel_time))
+                                # time_set_average_travel_time_list.append((time_set, average_travel_time))
 
                                 key = (link_id, day, month, year, is_weekday, is_public_holidays, is_school_holidays)
 
@@ -586,12 +619,7 @@ class JsonManager(QObject):
                 file.close()
                 end = time.time()
                 print("took :", end - now)
-
-            #self.__database_wrapper.insert_into_database(links_segments_list_dict)
-            database_wrapper.insert_into_database(links_segments_list_dict)
-            #print("inserted in the database")
-            #result = self.__database_wrapper.fetch_all_segment_data()
-            #print(len(result))
+            # database_wrapper.insert_into_database(links_segments_list_dict)
             self.__process_link_segments(links_segments_list_dict)
 
         self.__excel_exporter.write(self.__export_columns_dict)
@@ -615,48 +643,27 @@ class JsonManager(QObject):
         # peak_hour, peak_interval, peak_hour_average_travel_time, peak_interval_average_travel_time,
         # peak_hour_MPHF, peak_interval_MPHF, peak_hour_day_time,
 
-        link_id = row[0]
-        day = row[1]
-        month = row[2]
-        year = row[3]
-        is_weekday = row[4]
-        is_public_holidays = row[5]
-        is_school_terms = row[6]
-        peak_hour = row[7]
-        peak_interval = row[8]
-        peak_hour_quarter = row[9]
-        peak_period_quarter = row[10]
-        peak_hour_average_travel_time = row[11]
-        peak_interval_average_travel_time = row[12]
-        peak_hour_MPHF = row[13]
-        peak_interval_MPHF = row[14]
-        time = row[15]
-        peak_hour_seasonality = row[16]
-        peak_interval_seasonality = row[17]
-        local_board = row[18]
-        area = row[19]
-        direction = row[20]
+        self.__export_columns_dict[self.__export_columns[0]].append(row.link_id)
+        self.__export_columns_dict[self.__export_columns[1]].append(row.peak_day_time)
 
-        self.__export_columns_dict[self.__export_columns[0]].append(link_id)
-        self.__export_columns_dict[self.__export_columns[1]].append(time)
-        self.__export_columns_dict[self.__export_columns[2]].append(peak_hour)
-        self.__export_columns_dict[self.__export_columns[3]].append(peak_hour_quarter)
+        self.__export_columns_dict[self.__export_columns[2]].append(row.peak_hour)
+        self.__export_columns_dict[self.__export_columns[3]].append(row.peak_hour_max_quarter)
+        self.__export_columns_dict[self.__export_columns[4]].append(row.peak_hour_average_travel_time)
+        self.__export_columns_dict[self.__export_columns[5]].append(row.peak_hour_mphf)
+        self.__export_columns_dict[self.__export_columns[6]].append(row.peak_hour_seasonality)
 
-        self.__export_columns_dict[self.__export_columns[4]].append(peak_hour_average_travel_time)
-        self.__export_columns_dict[self.__export_columns[5]].append(peak_hour_MPHF)
-        self.__export_columns_dict[self.__export_columns[6]].append(peak_hour_seasonality)
-        self.__export_columns_dict[self.__export_columns[7]].append(peak_interval)
-        self.__export_columns_dict[self.__export_columns[8]].append(peak_period_quarter)
+        self.__export_columns_dict[self.__export_columns[7]].append(row.peak_period)
+        self.__export_columns_dict[self.__export_columns[8]].append(row.peak_period_max_quarter)
+        self.__export_columns_dict[self.__export_columns[9]].append(row.peak_period_average_travel_time)
+        self.__export_columns_dict[self.__export_columns[10]].append(row.peak_period_mphf)
+        self.__export_columns_dict[self.__export_columns[11]].append(row.peak_period_seasonality)
 
-        self.__export_columns_dict[self.__export_columns[9]].append(peak_interval_average_travel_time)
-        self.__export_columns_dict[self.__export_columns[10]].append(peak_interval_MPHF)
-        self.__export_columns_dict[self.__export_columns[11]].append(peak_interval_seasonality)
-        self.__export_columns_dict[self.__export_columns[12]].append(day)
-        self.__export_columns_dict[self.__export_columns[13]].append(month)
-        self.__export_columns_dict[self.__export_columns[14]].append(year)
-        self.__export_columns_dict[self.__export_columns[15]].append(is_public_holidays)
-        self.__export_columns_dict[self.__export_columns[16]].append(is_school_terms)
-        self.__export_columns_dict[self.__export_columns[17]].append(is_weekday)
-        self.__export_columns_dict[self.__export_columns[18]].append(local_board)
-        self.__export_columns_dict[self.__export_columns[19]].append(area)
-        self.__export_columns_dict[self.__export_columns[20]].append(direction)
+        self.__export_columns_dict[self.__export_columns[12]].append(row.day)
+        self.__export_columns_dict[self.__export_columns[13]].append(row.month)
+        self.__export_columns_dict[self.__export_columns[14]].append(row.year)
+        self.__export_columns_dict[self.__export_columns[15]].append(row.is_public_holidays)
+        self.__export_columns_dict[self.__export_columns[16]].append(row.is_school_terms)
+        self.__export_columns_dict[self.__export_columns[17]].append(row.is_weekday)
+        self.__export_columns_dict[self.__export_columns[18]].append(row.local_board)
+        self.__export_columns_dict[self.__export_columns[19]].append(row.area)
+        self.__export_columns_dict[self.__export_columns[20]].append(row.direction)

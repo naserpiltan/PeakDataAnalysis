@@ -2,6 +2,7 @@ import pandas as pd
 from enum import Enum
 from datetime import datetime, timedelta
 from functools import reduce
+from PeakHourResult import PeakData, AverageTravelTimeData
 
 
 class TimeType(Enum):
@@ -282,7 +283,6 @@ class PeakHourExtractor:
 
         # all the segments of a link
         for index, (time_set, average_travel_time) in enumerate(self.__time_set_average_travel_time_list_list):
-
             start_time = time_set.split('-')[0]
 
             start_time = datetime.strptime(str(start_time), "%H:%M")
@@ -306,7 +306,13 @@ class PeakHourExtractor:
             # sum_travel_times.append(travel_times_average)
             self.__sum_travel_times[time_set_value] = sum(travel_times)
 
-    def __get_peak(self, sum_travel_times_dict, slider_size, day_time="WeekendPeak"):
+    def get_times_set(self, time_start):
+        time_start = datetime.strptime(time_start, "%H:%M")
+        time_increment = timedelta(minutes=15)
+        next_time = time_start + time_increment
+        return time_start.strftime("%H:%M") + "-" + next_time.strftime("%H:%M")
+
+    def __get_peak(self, sum_travel_times_dict, slider_size, period_start: str, period_end: str):
         sum_travel_times_list = list(sum_travel_times_dict.values())
 
         sum_sum_travel_times_list = []
@@ -322,24 +328,13 @@ class PeakHourExtractor:
 
             sum_sum_travel_times_list.append(sum_average_travel_times)
 
-        start_index = 0
-        end_index = len(sum_sum_travel_times_list)
-
-        middle_day = datetime.strptime("12:00", "%H:%M")
-        time_increment = timedelta(minutes=15)
-        next_time = middle_day + time_increment
-        middle_day = middle_day.strftime("%H:%M") + "-" + next_time.strftime("%H:%M")
-
-        middle_day_index = list(sum_travel_times_dict.keys()).index(middle_day)
-        if day_time == "AM":
-            end_index = middle_day_index
-        elif day_time == "PM":
-            start_index = middle_day_index
+        start_index = list(sum_travel_times_dict.keys()).index(self.get_times_set(period_start))
+        end_index = list(sum_travel_times_dict.keys()).index(self.get_times_set(period_end))
 
         max_value = max(sum_sum_travel_times_list[start_index:end_index])
         max_index = sum_sum_travel_times_list.index(max_value, start_index, end_index)
 
-        max_quarter = max(sum_travel_times_list[max_index:min(max_index+slider_size, len(sum_travel_times_list))])
+        max_quarter = max(sum_travel_times_list[max_index:min(max_index + slider_size, len(sum_travel_times_list))])
         max_quarter_index = sum_travel_times_list.index(max_quarter)
         max_time_set = list(sum_travel_times_dict.keys())[max_index]
         max_time_set_quarter = list(sum_travel_times_dict.keys())[max_quarter_index]
@@ -359,60 +354,14 @@ class PeakHourExtractor:
 
         return peak_hour, max_time_set_quarter
 
-    def get_peaks(self):
+    def get_peaks(self, period_start: str, period_end: str):
 
-        if self.__is_week_day:
-            am_peak_hour, am_peak_hour_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size, "AM")
-            pm_peak_hour, pm_peak_hour_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size, "PM")
-            am_peak_period, am_peak_per_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size * 2, "AM")
-            pm_peak_period, pm_peak_per_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size * 2,"PM")
-            return (am_peak_hour, am_peak_period,
-                    pm_peak_hour, pm_peak_period,
-                    am_peak_hour_quarter, am_peak_per_quarter,
-                    pm_peak_hour_quarter, pm_peak_per_quarter)
+        peak_hour, peak_hour_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size,
+                                                       period_start, period_end)
+        peak_period, peak_per_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size * 2,
+                                                        period_start, period_end)
 
-        else:
-            peak_hour, peak_hour_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size)
-            peak_period, peak_per_quarter = self.__get_peak(self.__sum_travel_times, self.__slide_window_size * 2)
-            return (peak_hour, peak_period,
-                    None,None,
-                    peak_hour_quarter, peak_per_quarter,
-                    None,None)
-
-    def __get_peak_interval(self, sum_travel_times_dict):
-        sum_travel_times_list = list(sum_travel_times_dict.values())
-
-        sum_sum_travel_times_list = []
-        for index, value in enumerate(sum_travel_times_list):
-            start = index
-            end = index + self.__slide_window_size * 2
-            # bound the end value to the range ot the list
-            end = min(end, len(sum_travel_times_list))
-
-            sum_average_travel_times = sum(sum_travel_times_list[start:end])
-
-            sum_sum_travel_times_list.append(sum_average_travel_times)
-
-        max_value = max(sum_sum_travel_times_list)
-        max_index = sum_sum_travel_times_list.index(max_value)
-
-        max_time_set = list(sum_travel_times_dict.keys())[max_index]
-
-        start_time_set = str(max_time_set).split("-")[0]
-
-        start_time = datetime.strptime(start_time_set, "%H:%M")
-
-        # Increment of 15 minutes
-        time_increment = timedelta(minutes=120)
-
-        next_time = start_time + time_increment
-
-        peak_interval = start_time.strftime("%H:%M") + "-" + next_time.strftime("%H:%M")
-
-        return peak_interval
-
-    def get_peak_interval(self):
-        pass
+        return PeakData(peak_hour, peak_period, peak_hour_quarter, peak_per_quarter)
 
     def __get_average_travel_times(self, peak_time, times_sets_list, sum_travel_times_list, slider_size):
         start_time_set = str(peak_time).split("-")[0]
@@ -442,63 +391,22 @@ class PeakHourExtractor:
 
         return average, peak__mphf
 
-    def get_average_travel_times(self, am_peak_hour, am_peak_period, pm_peak_hour: None, pm_peak_period: None):
+    def get_average_travel_times(self, peak_hour, peak_period):
 
-        am_time_sets_list = []
-        pm_time_sets_list = []
-        am_sum_travel_times_list = []
-        pm_sum_travel_times_list = []
-
-
-        # for time_set in list(self.__sum_travel_times.keys()):
-        #     start_time_set = str(time_set).split("-")[0]
-        #     start_time = datetime.strptime(start_time_set, "%H:%M")
-        #     if start_time.hour < middle_day.hour:
-        #         am_time_sets_list.append(time_set)
-        #         am_sum_travel_times_list.append(self.__sum_travel_times[time_set])
-        #     else:
-        #         pm_time_sets_list.append(time_set)
-        #         pm_sum_travel_times_list.append(self.__sum_travel_times[time_set])
         time_sets_list = list(self.__sum_travel_times.keys())
         average_travel_times_list = list(self.__sum_travel_times.values())
-        if self.__is_week_day:
-            # am_peak_hour_average_travel_time, am_peak_hour_mphf
-            am_p_h_a_t_t, am_p_h_mphf = self.__get_average_travel_times(am_peak_hour,
-                                                                        time_sets_list,
-                                                                        average_travel_times_list,
-                                                                        self.__slide_window_size)
-            # am_peak_period_average_travel_time, am_peak_period_mphf
-            am_p_p_a_t_t, am_p_p_mphf = self.__get_average_travel_times(am_peak_period,
-                                                                        time_sets_list,
-                                                                        average_travel_times_list,
-                                                                        2 * self.__slide_window_size)
+        alias_function = self.__get_average_travel_times
 
-            # pm_peak_hour_average_travel_time, pm_peak_hour_mphf
-            pm_p_h_a_t_t, p_p_h_mphf = self.__get_average_travel_times(pm_peak_hour,
-                                                                       time_sets_list,
+        peak_hour_average_travel_time, peak_hour_mphf = alias_function(peak_hour, time_sets_list,
                                                                        average_travel_times_list,
                                                                        self.__slide_window_size)
-            # pm_peak_period_average_travel_time, pm_peak_period_mphf
-            pm_p_p_a_t_t, pm_p_p_mphf = self.__get_average_travel_times(pm_peak_period,
-                                                                        time_sets_list,
-                                                                        average_travel_times_list,
-                                                                        2 * self.__slide_window_size)
-            return (am_p_h_a_t_t, am_p_p_a_t_t, am_p_h_mphf, am_p_p_mphf,
-                    pm_p_h_a_t_t, pm_p_p_a_t_t, p_p_h_mphf, pm_p_p_mphf)
 
-        else:
+        peak_period_average_travel_time, peak_period_mphf = alias_function(peak_period, time_sets_list,
+                                                                           average_travel_times_list,
+                                                                           2 * self.__slide_window_size)
 
-            # peak_hour_average_travel_time, peak_hour_mphf
-            p_h_a_t_t, p_h_mphf = self.__get_average_travel_times(am_peak_hour,
-                                                                  time_sets_list,
-                                                                  average_travel_times_list,
-                                                                  self.__slide_window_size)
-            # peak_period_average_travel_time, peak_period_mph
-            p_p_a_t_t, p_p_mphf = self.__get_average_travel_times(am_peak_period,
-                                                                  time_sets_list,
-                                                                  average_travel_times_list,
-                                                                  2 * self.__slide_window_size)
-            return p_h_a_t_t, p_p_a_t_t, p_h_mphf, p_p_mphf, None, None,None,None
+        return AverageTravelTimeData(peak_hour_average_travel_time, peak_period_average_travel_time,
+                                     peak_hour_mphf, peak_period_mphf)
 
     def get_peak_interval_average_travel_time(self):
         time_sets_list = list(self.__sum_travel_times.keys())
